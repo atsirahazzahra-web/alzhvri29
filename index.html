@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daftar Hadir Kelas 12.04</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="h-full bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
+<div class="min-h-full p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">📚 Daftar Hadir</h1>
+            <p class="text-xl text-gray-600">Kelas 12.04</p>
+            <div class="w-24 h-1 bg-blue-500 mx-auto mt-4 rounded-full"></div>
+        </div>
+
+        <!-- Form Input -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">✏️ Input Kehadiran</h2>
+            <form id="attendanceForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="studentName" class="block text-sm font-medium text-gray-700 mb-2">Nama Siswa</label>
+                        <input type="text" id="studentName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" placeholder="Masukkan nama siswa">
+                    </div>
+                    <div>
+                        <label for="attendanceDate" class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
+                        <input type="date" id="attendanceDate" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Status Kehadiran</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all duration-200">
+                            <input type="radio" name="status" value="Hadir" required class="sr-only">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 radio-custom"></div>
+                                <span class="text-sm font-medium">✅ Hadir</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200">
+                            <input type="radio" name="status" value="Sakit" required class="sr-only">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 radio-custom"></div>
+                                <span class="text-sm font-medium">🤒 Sakit</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                            <input type="radio" name="status" value="Izin" required class="sr-only">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 radio-custom"></div>
+                                <span class="text-sm font-medium">📝 Izin</span>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-red-50 hover:border-red-300 transition-all duration-200">
+                            <input type="radio" name="status" value="Alfa" required class="sr-only">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 border-2 border-gray-300 rounded-full mr-3 radio-custom"></div>
+                                <span class="text-sm font-medium">❌ Alfa</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 transform hover:scale-105">💾 Simpan Kehadiran</button>
+            </form>
+        </div>
+
+        <!-- Hasil Daftar Hadir -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">📊 Daftar Kehadiran</h2>
+                <button id="downloadBtn" style="display:none;" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">📥 Download Excel</button>
+            </div>
+            <div id="attendanceTable" class="overflow-x-auto">
+                <div class="text-center py-8 text-gray-500">
+                    <p class="text-lg">Belum ada data kehadiran</p>
+                    <p class="text-sm">Silakan input kehadiran siswa terlebih dahulu</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let attendanceData = [];
+document.getElementById('attendanceDate').valueAsDate = new Date();
+
+document.getElementById('attendanceForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const name = document.getElementById('studentName').value;
+    const date = document.getElementById('attendanceDate').value;
+    const status = document.querySelector('input[name="status"]:checked').value;
+
+    const dateObj = new Date(date);
+    const formattedDate = dateObj.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    attendanceData.push({nama:name, tanggal:date, tanggalFormat:formattedDate, status:status, timestamp: new Date().getTime()});
+    updateTable();
+    document.getElementById('studentName').value='';
+    document.querySelector('input[name="status"]:checked').checked = false;
+});
+
+function updateTable(){
+    const tableContainer = document.getElementById('attendanceTable');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    if(attendanceData.length === 0){
+        tableContainer.innerHTML = `<div class="text-center py-8 text-gray-500"><p class="text-lg">Belum ada data kehadiran</p><p class="text-sm">Silakan input kehadiran siswa terlebih dahulu</p></div>`;
+        downloadBtn.style.display = 'none';
+        return;
+    }
+
+    downloadBtn.style.display = 'flex';
+    let tableHTML = `<table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Siswa</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th></tr></thead><tbody class="divide-y divide-gray-200">`;
+    attendanceData.forEach((d,i)=>{tableHTML+=`<tr><td class="px-6 py-4">${i+1}</td><td class="px-6 py-4">${d.nama}</td><td class="px-6 py-4">${d.tanggalFormat}</td><td class="px-6 py-4">${d.status}</td></tr>`;});
+    tableHTML+=`</tbody></table>`;
+    tableContainer.innerHTML = tableHTML;
+}
+
+document.getElementById('downloadBtn').addEventListener('click', function(){
+    if(attendanceData.length===0){alert('Tidak ada data!'); return;}
+
+    const data = attendanceData.map((d,i)=>({No:i+1, Nama:d.nama, Tanggal:d.tanggalFormat, Status:d.status}));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "DaftarHadir");
+
+    // Trigger download menggunakan Blob untuk kompatibilitas HP & PC
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob = new Blob([wbout], {type:"application/octet-stream"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date().toISOString().split('T')[0];
+    a.download = `Daftar_Hadir_Kelas_12.04_${today}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
